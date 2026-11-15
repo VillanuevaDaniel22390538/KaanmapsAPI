@@ -81,7 +81,7 @@
                     </p>
                     <div class="bg-red-50 border-l-4 border-kaan-primary p-4 rounded-r-lg">
                         <p class="text-sm text-kaan-dark font-medium">URL Base del Servidor Local:</p>
-                        <code class="text-kaan-primary bg-red-100 px-2 py-1 rounded mt-1 inline-block font-semibold">http://localhost:8003/v1</code>
+                        <code class="text-kaan-primary bg-red-100 px-2 py-1 rounded mt-1 inline-block font-semibold">{{ url('/v1') }}</code>
                     </div>
                 </div>
             </section>

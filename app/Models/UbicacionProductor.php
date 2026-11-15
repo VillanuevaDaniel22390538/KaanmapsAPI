@@ -14,4 +14,9 @@ class UbicacionProductor extends Model
         'ID_Productor', 'Latitud', 'Longitud', 'Direccion', 'Localidad',
         'Municipio', 'Estado', 'Pais', 'Precision_Geolocalizacion', 'Es_Principal'
     ];
+
+    public function productor()
+    {
+        return $this->belongsTo(Productor::class, 'ID_Productor', 'ID_Productor');
+    }
 }

@@ -22,7 +22,7 @@ class ProductorResource extends JsonResource
                 'avatar' => $this->usuario->Avatar_URL ?? null,
             ],
             'ubicaciones' => $this->whenLoaded('ubicaciones'),
-            'productos' => $this->whenLoaded('productos'),
+
         ];
     }
 }
