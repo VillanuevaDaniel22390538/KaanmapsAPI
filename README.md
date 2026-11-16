@@ -1,59 +1,66 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Ka'an Maps API (v1)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend Laravel para el marketplace de productores de Quintana Roo consumido por la app móvil Flutter (Clean Architecture + MVVM).
 
-## About Laravel
+Ver el detalle completo de contratos JSON (ANTES / DESPUÉS) y campos deprecados en [CHANGELOG-API.md](./CHANGELOG-API.md).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Variables de entorno (`.env`)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Revisa `.env.example` para ver todas las variables disponibles:
 
-## Learning Laravel
+```dotenv
+APP_URL=http://localhost:8000
+APP_DEBUG=false                  # true solo en local; false en producción
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+MEDIA_DISK=public                # disco de archivos para MediaUrl (APP_URL + disco)
+CORS_ALLOWED_ORIGINS=*           # en producción: lista separada por comas
+CATALOG_ONLY_VERIFIED=false      # true para listar solo productores Verificados
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+API_RATE_PUBLIC=60               # GET públicos (req/min por IP)
+API_RATE_LOGIN=5                 # POST /v1/login (req/min por email+IP)
+API_RATE_WRITES=30               # rutas autenticadas (req/min por usuario)
+```
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Flujo de despliegue / actualización en BD local
 
-### Premium Partners
+### 1. Respaldar la base de datos antes de migrar
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+mkdir -p ~/backups
+/Applications/XAMPP/xamppfiles/bin/mysqldump -u root -p \
+  --single-transaction --routines --triggers --default-character-set=utf8mb4 \
+  kaanmapsdb > ~/backups/kaanmapsdb_$(date +%Y%m%d_%H%M%S).sql
+```
 
-## Contributing
+### 2. Previsualizar y ejecutar migraciones nuevas (reversibles)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan migrate --pretend
+php artisan migrate
+```
 
-## Code of Conduct
+### 3. Ejecutar seeders idempotentes (en este orden)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan db:seed --class=CategoriaSeeder
+php artisan db:seed --class=ReasignarCategoriasProductosSeeder
+php artisan db:seed --class=ProductosDemoSeeder   # Solo local/staging (no correr en producción)
+```
 
-## Security Vulnerabilities
+### 4. Enlazar almacenamiento público
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan storage:link
+```
 
-## License
+### 5. Correr tests
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Los tests corren exclusivamente sobre SQLite en memoria (`phpunit.xml`) y nunca tocan la base de datos MySQL local:
+
+```bash
+php artisan test
+```

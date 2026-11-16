@@ -80,8 +80,8 @@
                         Bienvenido a la API RESTful oficial de <strong>Ka'an Maps</strong>. Este ecosistema permite a la aplicación móvil y a otros servicios autorizados interactuar de forma segura con la base de datos centralizada de productores, productos, eventos y programas sociales del estado de Quintana Roo.
                     </p>
                     <div class="bg-red-50 border-l-4 border-kaan-primary p-4 rounded-r-lg">
-                        <p class="text-sm text-kaan-dark font-medium">URL Base del Servidor Local:</p>
-                        <code class="text-kaan-primary bg-red-100 px-2 py-1 rounded mt-1 inline-block font-semibold">http://localhost:8003/v1</code>
+                        <p class="text-sm text-kaan-dark font-medium">URL Base del Servidor:</p>
+                        <code class="text-kaan-primary bg-red-100 px-2 py-1 rounded mt-1 inline-block font-semibold">{{ rtrim(config('app.url'), '/') }}/v1</code>
                     </div>
                 </div>
             </section>
@@ -128,12 +128,14 @@
                         <code class="text-sm font-bold text-gray-800">/v1/productores</code>
                     </div>
                     <div class="p-6">
-                        <p class="text-sm text-gray-600 mb-4">Obtiene la lista de todos los productores con sus relaciones (usuario, ubicaciones, productos).</p>
+                        <p class="text-sm text-gray-600 mb-4">Obtiene la lista paginada de productores activos con sus ubicaciones e imágenes de instalaciones. En <code>GET /v1/productores/{id}</code> admite <code>?include=productos</code>.</p>
                         <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Parámetros de Consulta Opcionales:</p>
                         <ul class="text-sm text-gray-700 space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">search</code> - Buscar por nombre de negocio o descripción.</li>
-                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">tipo_actividad</code> - Ej: Agricultura, Apicultura.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">q</code> - Buscar por nombre de negocio o descripción (alias legacy: <code>search</code>).</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">categoria_id</code> - Filtra por categoría (incluye descendientes; coincide por categoría principal o por productos).</li>
                             <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">municipio</code> - Ej: Solidaridad, Othón P. Blanco.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">estado_verificacion</code> - <code>Pendiente</code>, <code>Verificado</code> o <code>Rechazado</code>.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">per_page</code> - Resultados por página (default 15, máximo 100).</li>
                         </ul>
                     </div>
                 </div>
@@ -146,12 +148,12 @@
                         <span class="text-xs text-kaan-primary border border-red-200 bg-red-50 px-2 py-1 rounded-full ml-auto font-semibold">Requiere Token</span>
                     </div>
                     <div class="p-6">
-                        <p class="text-sm text-gray-600 mb-4">Registra un nuevo productor. Acepta <code>multipart/form-data</code> para la subida del logo.</p>
+                        <p class="text-sm text-gray-600 mb-4">Registra un nuevo productor. Acepta <code>multipart/form-data</code> para logo e <code>imagenes_instalaciones[]</code> (campos Pascal_Snake o alias snake_case).</p>
                         <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Campos Requeridos:</p>
                         <ul class="text-sm text-gray-700 space-y-2">
-                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">ID_Usuario</code> - ID del usuario existente.</li>
-                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">Nombre_Negocio</code> - Nombre comercial.</li>
-                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">Tipo_Actividad</code> - Categoría principal.</li>
+                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">ID_Usuario</code> / <code class="bg-gray-100 px-2 py-0.5 rounded">usuario_id</code> - ID del usuario existente.</li>
+                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">Nombre_Negocio</code> / <code class="bg-gray-100 px-2 py-0.5 rounded">nombre_negocio</code> - Nombre comercial.</li>
+                            <li><code class="bg-gray-100 px-2 py-0.5 rounded">categoria_id</code> / <code class="bg-gray-100 px-2 py-0.5 rounded">categoria_principal_id</code> - Categoría principal (o <code>Tipo_Actividad</code>, deprecado).</li>
                         </ul>
                     </div>
                 </div>
@@ -166,7 +168,17 @@
                         <code class="text-sm font-bold text-gray-800">/v1/productos</code>
                     </div>
                     <div class="p-6">
-                        <p class="text-sm text-gray-600">Obtiene el catálogo de productos. Filtro opcional: <code>?productor_id=1</code>.</p>
+                        <p class="text-sm text-gray-600 mb-4">Obtiene el catálogo paginado de productos con jerarquía calculada (<code>categoria_raiz_id</code>, <code>subcategoria_id</code>, <code>tipo_id</code>). En detalle: <code>GET /v1/productos/{id}</code>.</p>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Parámetros de Consulta Opcionales:</p>
+                        <ul class="text-sm text-gray-700 space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">categoria_id</code> - Filtra por nodo de categoría incluyendo descendientes.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">productor_id</code> - Filtra por productor.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">disponible</code> - <code>true</code> / <code>false</code> (o <code>1</code> / <code>0</code>).</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">etiqueta</code> - Coincidencia exacta en etiquetas JSON.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">q</code> - Búsqueda por nombre o descripción.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">sort</code> - <code>recientes</code> (default), <code>precio_asc</code>, <code>precio_desc</code>.</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">per_page</code> - Resultados por página (default 15, máximo 100).</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -190,7 +202,11 @@
                         <code class="text-sm font-bold text-gray-800">/v1/categorias</code>
                     </div>
                     <div class="p-6">
-                        <p class="text-sm text-gray-600">Obtiene la lista completa de categorías de productos (catálogo cerrado).</p>
+                        <p class="text-sm text-gray-600 mb-3">Obtiene la lista plana de categorías activas (3 niveles: Categoría → Subcategoría → Tipo) con <code>Cache-Control</code> y <code>ETag</code>.</p>
+                        <ul class="text-sm text-gray-700 space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">nivel</code> - Nivel jerárquico (<code>1</code>, <code>2</code> o <code>3</code>).</li>
+                            <li><code class="bg-white border border-gray-200 px-2 py-0.5 rounded shadow-sm text-kaan-primary">padre_id</code> - ID del nodo padre directo.</li>
+                        </ul>
                     </div>
                 </div>
 

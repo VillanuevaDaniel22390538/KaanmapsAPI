@@ -19,4 +19,10 @@ return [
     'per_page_default' => 15,
     'per_page_max' => 100,
 
+    'rate_limits' => [
+        'public' => (int) env('API_RATE_PUBLIC', 60),
+        'login' => (int) env('API_RATE_LOGIN', 5),
+        'writes' => (int) env('API_RATE_WRITES', 30),
+    ],
+
 ];

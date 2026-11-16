@@ -17,26 +17,29 @@ Route::prefix('v1')->group(function () {
     // ==========================================
     // Rutas Públicas
     // ==========================================
-    Route::middleware(['throttle:60,1'])->group(function () {
-        Route::post('/login', [AuthController::class, 'login']);
-        
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware(['throttle:login']);
+
+    Route::middleware(['throttle:public-api'])->group(function () {
         Route::get('/eventos', [EventoController::class, 'index']);
         Route::get('/convocatorias', [ConvocatoriaController::class, 'index']);
-        
+
         Route::get('/categorias', [CategoriaController::class, 'index'])
             ->middleware('cache.headers:public;max_age=3600;etag');
-        
-        Route::get('/productores', [ProductorController::class, 'index']);
-        Route::get('/productores/{id}', [ProductorController::class, 'show']);
-        
-        Route::get('/productos', [ProductoController::class, 'index']);
-        Route::get('/productos/{id}', [ProductoController::class, 'show']);
+
+        Route::middleware(['cache.headers:no_cache;etag'])->group(function () {
+            Route::get('/productores', [ProductorController::class, 'index']);
+            Route::get('/productores/{id}', [ProductorController::class, 'show']);
+
+            Route::get('/productos', [ProductoController::class, 'index']);
+            Route::get('/productos/{id}', [ProductoController::class, 'show']);
+        });
     });
 
     // ==========================================
     // Rutas Protegidas (Requieren Token)
     // ==========================================
-    Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:writes'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         
         // Productores
