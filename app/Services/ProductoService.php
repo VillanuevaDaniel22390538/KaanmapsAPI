@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\ProductoRepositoryInterface;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class ProductoService
@@ -30,7 +31,7 @@ class ProductoService
         if (isset($data['URLs_Imagenes']) && is_array($data['URLs_Imagenes'])) {
             $paths = [];
             foreach ($data['URLs_Imagenes'] as $image) {
-                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                if ($image instanceof UploadedFile) {
                     $path = $image->store('productos', 'public');
                     $paths[] = Storage::disk('public')->url($path);
                 }
@@ -51,7 +52,7 @@ class ProductoService
         if (isset($data['URLs_Imagenes']) && is_array($data['URLs_Imagenes'])) {
             $paths = [];
             foreach ($data['URLs_Imagenes'] as $image) {
-                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                if ($image instanceof UploadedFile) {
                     $path = $image->store('productos', 'public');
                     $paths[] = Storage::disk('public')->url($path);
                 }

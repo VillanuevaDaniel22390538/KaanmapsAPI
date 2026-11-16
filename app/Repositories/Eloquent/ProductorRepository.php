@@ -13,33 +13,33 @@ class ProductorRepository implements ProductorRepositoryInterface
         $query = Productor::with(['usuario', 'ubicaciones', 'productos']);
 
         // 1. Búsqueda por texto (Nombre del negocio o descripción)
-        if (isset($filters['search']) && !empty($filters['search'])) {
+        if (isset($filters['search']) && ! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('Nombre_Negocio', 'LIKE', "%{$search}%")
-                  ->orWhere('Descripcion_Negocio', 'LIKE', "%{$search}%");
+                    ->orWhere('Descripcion_Negocio', 'LIKE', "%{$search}%");
             });
         }
 
         // 2. Filtro por Tipo de Actividad
-        if (isset($filters['tipo_actividad']) && !empty($filters['tipo_actividad'])) {
+        if (isset($filters['tipo_actividad']) && ! empty($filters['tipo_actividad'])) {
             $query->where('Tipo_Actividad', $filters['tipo_actividad']);
         }
-        
+
         // 3. Filtro por Estado de Verificación
-        if (isset($filters['estado_verificacion']) && !empty($filters['estado_verificacion'])) {
+        if (isset($filters['estado_verificacion']) && ! empty($filters['estado_verificacion'])) {
             $query->where('Estado_Verificacion', $filters['estado_verificacion']);
         }
 
         // 4. Filtro por Municipio (A través de la relación ubicaciones)
-        if (isset($filters['municipio']) && !empty($filters['municipio'])) {
+        if (isset($filters['municipio']) && ! empty($filters['municipio'])) {
             $query->whereHas('ubicaciones', function ($q) use ($filters) {
                 $q->where('Municipio', 'LIKE', "%{$filters['municipio']}%");
             });
         }
 
         // 5. Filtro por Categoría de Producto (A través de la relación productos)
-        if (isset($filters['categoria_id']) && !empty($filters['categoria_id'])) {
+        if (isset($filters['categoria_id']) && ! empty($filters['categoria_id'])) {
             $query->whereHas('productos', function ($q) use ($filters) {
                 $q->where('ID_Categoria', $filters['categoria_id']);
             });
@@ -62,12 +62,14 @@ class ProductorRepository implements ProductorRepositoryInterface
     {
         $productor = Productor::findOrFail($id);
         $productor->update($data);
+
         return $productor->load(['usuario', 'ubicaciones', 'productos']);
     }
 
     public function delete(int $id)
     {
         $productor = Productor::findOrFail($id);
+
         return $productor->delete();
     }
 }

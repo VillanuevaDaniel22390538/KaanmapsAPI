@@ -35,12 +35,14 @@ class ProductoRepository implements ProductoRepositoryInterface
     {
         $producto = Producto::findOrFail($id);
         $producto->update($data);
+
         return $producto;
     }
 
     public function delete(int $id)
     {
         $producto = Producto::findOrFail($id);
+
         return $producto->delete();
     }
 }

@@ -11,6 +11,7 @@ class ProductorResource extends JsonResource
         return [
             'id' => $this->ID_Productor,
             'nombre_negocio' => $this->Nombre_Negocio,
+            'categoria_id' => $this->ID_Categoria,
             'descripcion' => $this->Descripcion_Negocio,
             'tipo_actividad' => $this->Tipo_Actividad,
             'slogan' => $this->Slogan,
@@ -22,7 +23,12 @@ class ProductorResource extends JsonResource
                 'avatar' => $this->usuario->Avatar_URL ?? null,
             ],
             'ubicaciones' => $this->whenLoaded('ubicaciones'),
-            'productos' => $this->whenLoaded('productos'),
+            'email' => $this->email_contacto, // <-- Nuevo
+            'facebook' => $this->facebook, // <-- Nuevo
+            'instagram' => $this->instagram, // <-- Nuevo
+            'hora_apertura' => $this->hora_apertura, // <-- Nuevo
+            'hora_cierre' => $this->hora_cierre, // <-- Nuevo
+            'imagenes_instalaciones' => $this->imagenes_instalaciones ?? [], // <-- Nuevo
         ];
     }
 }

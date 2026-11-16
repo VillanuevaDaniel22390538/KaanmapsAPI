@@ -10,11 +10,14 @@ class Productor extends Model
     use HasFactory;
 
     protected $table = 'productores';
+
     protected $primaryKey = 'ID_Productor';
+
     public $timestamps = false;
 
     protected $fillable = [
         'ID_Usuario',
+        'ID_Categoria',
         'Nombre_Negocio',
         'Descripcion_Negocio',
         'Tipo_Actividad',
@@ -27,7 +30,7 @@ class Productor extends Model
         'Estado',
         'ID_Dependencia_Registradora',
         'ID_Usuario_Registrador',
-        'Estado_Aprobacion_Gobierno'
+        'Estado_Aprobacion_Gobierno',
     ];
 
     public function usuario()
