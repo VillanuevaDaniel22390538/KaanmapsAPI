@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\ProductoRepositoryInterface;
-use Illuminate\Support\Facades\Storage;
+use App\Support\MediaUrl;
+use Illuminate\Http\UploadedFile;
 
 class ProductoService
 {
@@ -26,48 +27,36 @@ class ProductoService
 
     public function crearProducto(array $data)
     {
-        // Manejo de múltiples imágenes
-        if (isset($data['URLs_Imagenes']) && is_array($data['URLs_Imagenes'])) {
-            $paths = [];
-            foreach ($data['URLs_Imagenes'] as $image) {
-                if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $path = $image->store('productos', 'public');
-                    $paths[] = Storage::disk('public')->url($path);
-                }
-            }
-            $data['URLs_Imagenes'] = json_encode($paths);
-        }
-
-        // Convertir etiquetas a JSON
-        if (isset($data['Etiquetas']) && is_array($data['Etiquetas'])) {
-            $data['Etiquetas'] = json_encode($data['Etiquetas']);
-        }
-
-        return $this->repository->create($data);
+        return $this->repository->create($this->prepararDatos($data));
     }
 
     public function actualizarProducto(int $id, array $data)
     {
-        if (isset($data['URLs_Imagenes']) && is_array($data['URLs_Imagenes'])) {
-            $paths = [];
-            foreach ($data['URLs_Imagenes'] as $image) {
-                if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $path = $image->store('productos', 'public');
-                    $paths[] = Storage::disk('public')->url($path);
-                }
-            }
-            $data['URLs_Imagenes'] = json_encode($paths);
-        }
-
-        if (isset($data['Etiquetas']) && is_array($data['Etiquetas'])) {
-            $data['Etiquetas'] = json_encode($data['Etiquetas']);
-        }
-
-        return $this->repository->update($id, $data);
+        return $this->repository->update($id, $this->prepararDatos($data));
     }
 
     public function eliminarProducto(int $id)
     {
         return $this->repository->delete($id);
+    }
+
+    /**
+     * Sube las imágenes y deja en BD SOLO rutas relativas al disco (nunca URLs
+     * absolutas). El modelo castea URLs_Imagenes / Etiquetas a array, así que
+     * aquí NO se hace json_encode.
+     */
+    private function prepararDatos(array $data): array
+    {
+        if (isset($data['URLs_Imagenes']) && is_array($data['URLs_Imagenes'])) {
+            $rutas = [];
+            foreach ($data['URLs_Imagenes'] as $image) {
+                if ($image instanceof UploadedFile) {
+                    $rutas[] = $image->store('productos', MediaUrl::disk());
+                }
+            }
+            $data['URLs_Imagenes'] = $rutas;
+        }
+
+        return $data;
     }
 }

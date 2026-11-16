@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin \App\Models\Productor */
 class ProductorResource extends JsonResource
 {
-    public function toArray($request)
+    public function toArray(Request $request): array
     {
         return [
             'id' => $this->ID_Productor,
@@ -14,15 +17,15 @@ class ProductorResource extends JsonResource
             'descripcion' => $this->Descripcion_Negocio,
             'tipo_actividad' => $this->Tipo_Actividad,
             'slogan' => $this->Slogan,
-            'logo' => $this->Logo_URL,
+            'logo' => MediaUrl::resolve($this->Logo_URL),
             'estado_verificacion' => $this->Estado_Verificacion,
             'usuario' => [
-                'nombre' => $this->usuario->Nombre_Usuario ?? null,
-                'telefono' => $this->usuario->Telefono ?? null,
-                'avatar' => $this->usuario->Avatar_URL ?? null,
+                'nombre' => $this->usuario?->Nombre_Usuario,
+                'telefono' => $this->usuario?->Telefono,
+                'avatar' => MediaUrl::resolve($this->usuario?->Avatar_URL),
             ],
-            'ubicaciones' => $this->whenLoaded('ubicaciones'),
-            'productos' => $this->whenLoaded('productos'),
+            'ubicaciones' => UbicacionResource::collection($this->whenLoaded('ubicaciones')),
+            'productos' => ProductoResource::collection($this->whenLoaded('productos')),
         ];
     }
 }

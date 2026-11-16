@@ -3,35 +3,33 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListUbicacionesRequest;
+use App\Http\Requests\StoreUbicacionRequest;
+use App\Http\Resources\UbicacionResource;
 use App\Models\UbicacionProductor;
-use Illuminate\Http\Request;
 
 class UbicacionController extends Controller
 {
-    public function index(Request $request)
+    public function index(ListUbicacionesRequest $request)
     {
-        $request->validate(['productor_id' => 'required|exists:productores,ID_Productor']);
-        $ubicaciones = UbicacionProductor::where('ID_Productor', $request->productor_id)->get();
-        return response()->json(['data' => $ubicaciones], 200);
+        $ubicaciones = UbicacionProductor::where('ID_Productor', $request->integer('productor_id'))
+            ->orderByDesc('Es_Principal')
+            ->orderBy('ID_Ubicacion')
+            ->get();
+
+        return UbicacionResource::collection($ubicaciones);
     }
 
-    public function store(Request $request)
+    public function store(StoreUbicacionRequest $request)
     {
-        $validated = $request->validate([
-            'ID_Productor' => 'required|exists:productores,ID_Productor',
-            'Latitud' => 'required|numeric',
-            'Longitud' => 'required|numeric',
-            'Direccion' => 'nullable|string',
-            'Localidad' => 'nullable|string',
-            'Municipio' => 'nullable|string',
-        ]);
+        $ubicacion = UbicacionProductor::create($request->validated());
 
-        $ubicacion = UbicacionProductor::create($validated);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Ubicación registrada correctamente.',
-            'data' => $ubicacion
-        ], 201);
+        return (new UbicacionResource($ubicacion->refresh()))
+            ->additional([
+                'success' => true,
+                'message' => 'Ubicación registrada correctamente.',
+            ])
+            ->response()
+            ->setStatusCode(201);
     }
 }

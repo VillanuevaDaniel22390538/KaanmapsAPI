@@ -21,4 +21,14 @@ class Producto extends Model
         'Etiquetas' => 'array',
         'Disponible' => 'boolean'
     ];
+
+    public function productor()
+    {
+        return $this->belongsTo(Productor::class, 'ID_Productor', 'ID_Productor');
+    }
+
+    public function categoria()
+    {
+        return $this->belongsTo(CategoriaProducto::class, 'ID_Categoria', 'ID_Categoria');
+    }
 }

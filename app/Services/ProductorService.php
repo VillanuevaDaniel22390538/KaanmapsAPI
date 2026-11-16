@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\ProductorRepositoryInterface;
+use App\Support\MediaUrl;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -62,16 +63,16 @@ class ProductorService
         $image = $manager->read($file);
         
         // Redimensionar: Si es más ancha de 800px, la escala proporcionalmente
-        $image->scale(width: 800);
+        $image->scaleDown(width: 800);
         
         // Generar un nombre único y la ruta destino (Ej: storage_global/app/public/logos/abc123.jpg)
-        $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+        $filename = uniqid() . '.jpg'; // el contenido se re-codifica a JPEG
         $path = $carpeta . '/' . $filename;
         
-        // Guardar la imagen optimizada en el disco 'public' (que apunta a storage_global)
-        Storage::disk('public')->put($path, (string) $image->toJpeg(80)); // Calidad 80%
+        // Guardar la imagen optimizada en el disco configurado (MEDIA_DISK)
+        Storage::disk(MediaUrl::disk())->put($path, (string) $image->toJpeg(80)); // Calidad 80%
         
-        // Retornar la URL pública para guardarla en la Base de Datos
-        return Storage::disk('public')->url($path);
+        // En BD va SOLO la ruta relativa; la URL absoluta se construye al responder (MediaUrl)
+        return $path;
     }
 }

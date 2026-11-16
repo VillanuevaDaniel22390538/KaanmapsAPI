@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media Disk
+    |--------------------------------------------------------------------------
+    |
+    | Disco donde viven las imágenes subidas por los usuarios. Las URLs públicas
+    | se construyen con Storage::disk(<media_disk>)->url(), es decir APP_URL (o
+    | la URL del disco) + ruta relativa. En BD solo se guardan rutas relativas.
+    |
+    */
+
+    'media_disk' => env('MEDIA_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
