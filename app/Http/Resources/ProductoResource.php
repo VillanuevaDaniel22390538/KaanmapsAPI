@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\CategoriaTree;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -11,10 +12,16 @@ class ProductoResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // categoria_id es el nodo MÁS ESPECÍFICO; el resto se deduce por ancestros.
+        $ruta = CategoriaTree::current()->ruta((int) $this->ID_Categoria);
+
         return [
             'id' => $this->ID_Producto,
             'productor_id' => $this->ID_Productor,
             'categoria_id' => $this->ID_Categoria,
+            'categoria_raiz_id' => $ruta[0] ?? null,
+            'subcategoria_id' => $ruta[1] ?? null,
+            'tipo_id' => $ruta[2] ?? null,
             'nombre' => $this->Nombre_Producto,
             'descripcion' => $this->Descripcion,
             // Decimal como string ("3000.00"), moneda ISO 4217.

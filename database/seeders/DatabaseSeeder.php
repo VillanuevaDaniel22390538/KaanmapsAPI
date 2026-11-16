@@ -14,9 +14,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CategoriaSeeder::class,
-            // Se registran en las fases siguientes:
-            // ReasignarCategoriasProductosSeeder::class,
-            // ProductosDemoSeeder::class,
+            ReasignarCategoriasProductosSeeder::class,
         ]);
+
+        // Datos de demostración: nunca en producción.
+        if (! app()->environment('production')) {
+            $this->call(ProductosDemoSeeder::class);
+        }
     }
 }

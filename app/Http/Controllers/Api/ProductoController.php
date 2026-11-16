@@ -3,58 +3,59 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductoResource;
-use App\Services\ProductoService;
+use App\Http\Requests\ListProductosRequest;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
-use Illuminate\Http\Request;
+use App\Http\Resources\ProductoResource;
+use App\Models\Producto;
+use App\Services\ProductoService;
+use Illuminate\Support\Facades\Gate;
 
 class ProductoController extends Controller
 {
-    protected $service;
-
-    public function __construct(ProductoService $service)
+    public function __construct(protected ProductoService $service)
     {
-        $this->service = $service;
     }
 
-    public function index(Request $request)
+    public function index(ListProductosRequest $request)
     {
-        $filters = $request->only(['productor_id', 'disponible']);
-        $productos = $this->service->listarProductos($filters, $request->get('per_page', 15));
-        return ProductoResource::collection($productos);
+        return ProductoResource::collection(
+            $this->service->listarProductos($request->filtros(), $request->perPage())
+        );
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        $producto = $this->service->obtenerProducto($id);
-        return new ProductoResource($producto);
+        return new ProductoResource($this->service->obtenerProducto($id));
     }
 
     public function store(StoreProductoRequest $request)
     {
         $producto = $this->service->crearProducto($request->validated());
-        return (new ProductoResource($producto))->additional([
-            'success' => true,
-            'message' => 'Producto creado exitosamente.'
-        ])->response()->setStatusCode(201);
+
+        return (new ProductoResource($producto))
+            ->additional(['success' => true, 'message' => 'Producto creado exitosamente.'])
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function update(UpdateProductoRequest $request, $id)
+    public function update(UpdateProductoRequest $request, int $id)
     {
         $producto = $this->service->actualizarProducto($id, $request->validated());
-        return (new ProductoResource($producto))->additional([
-            'success' => true,
-            'message' => 'Producto actualizado correctamente.'
-        ]);
+
+        return (new ProductoResource($producto))
+            ->additional(['success' => true, 'message' => 'Producto actualizado correctamente.']);
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
+        Gate::authorize('delete', Producto::findOrFail($id));
+
         $this->service->eliminarProducto($id);
+
         return response()->json([
             'success' => true,
-            'message' => 'Producto eliminado correctamente.'
+            'message' => 'Producto eliminado correctamente.',
         ], 200);
     }
 }

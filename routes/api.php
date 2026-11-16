@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\EventoController;
 use App\Http\Controllers\Api\ConvocatoriaController;
 use App\Http\Controllers\Api\AuthController;
 
+// Los {id} de la API siempre son numéricos (si no, 404 en vez de 500).
+Route::pattern('id', '[0-9]+');
+
 Route::prefix('v1')->group(function () {
 
     // ==========================================

@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Validation\ValidationException;
 
@@ -31,6 +32,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     'success' => false,
                     'message' => 'El recurso solicitado no existe.'
                 ], 404);
+            }
+        });
+
+        // 403: sin permiso sobre el recurso (policies / authorize() de los FormRequest)
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            if ($request->is('v1/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para realizar esta acción.'
+                ], 403);
             }
         });
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,6 +39,20 @@ class Productor extends Model
         'telefono_contacto',
         'horario',
     ];
+
+    /**
+     * Productores visibles en el catálogo público (ver config/catalog.php).
+     */
+    public function scopeCatalogo(Builder $query): Builder
+    {
+        $query->where('Estado', 'Activo');
+
+        if (config('catalog.only_verified')) {
+            $query->where('Estado_Verificacion', 'Verificado');
+        }
+
+        return $query;
+    }
 
     public function usuario()
     {
