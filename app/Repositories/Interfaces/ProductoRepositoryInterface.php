@@ -4,7 +4,7 @@ namespace App\Repositories\Interfaces;
 
 interface ProductoRepositoryInterface
 {
-    public function getAll(array $filters, int $perPage = 15);
+    public function getAll(array $filters, int $limitPerPage);
 
     public function getById(int $id);
 

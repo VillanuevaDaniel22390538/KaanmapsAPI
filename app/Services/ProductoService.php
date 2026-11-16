@@ -15,9 +15,9 @@ class ProductoService
         $this->repository = $repository;
     }
 
-    public function listarProductos(array $filters, int $perPage = 15)
+    public function listarProductos(array $filters, int $limitPerPage)
     {
-        return $this->repository->getAll($filters, $perPage);
+        return $this->repository->getAll($filters, $limitPerPage);
     }
 
     public function obtenerProducto(int $id)

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductorResource;
-use App\Services\ProductorService;
 use App\Http\Requests\StoreProductorRequest;
 use App\Http\Requests\UpdateProductorRequest;
+use App\Http\Resources\ProductorResource;
+use App\Services\ProductorService;
 use Illuminate\Http\Request;
 
 class ProductorController extends Controller
@@ -19,19 +19,21 @@ class ProductorController extends Controller
     }
 
     public function index(Request $request)
-{
-    $filters = $request->only([
-        'search', 'tipo_actividad', 'estado_verificacion', 'municipio', 'categoria_id'
-    ]);
-    
-    $productores = $this->service->listarProductores($filters, $request->get('per_page', 15));
-    
-    return ProductorResource::collection($productores);
-}
+    {
+        $limitPerPage = $request->input('per_Page', 100);
+        $filters = $request->only([
+            'search', 'tipo_actividad', 'estado_verificacion', 'municipio', 'categoria_id',
+        ]);
+
+        $productores = $this->service->listarProductores($filters, $limitPerPage);
+
+        return ProductorResource::collection($productores);
+    }
 
     public function show($id)
     {
         $productor = $this->service->obtenerProductor($id);
+
         return new ProductorResource($productor);
     }
 
@@ -43,7 +45,7 @@ class ProductorController extends Controller
         return (new ProductorResource($productor))
             ->additional([
                 'success' => true,
-                'message' => 'Productor creado exitosamente.'
+                'message' => 'Productor creado exitosamente.',
             ])
             ->response()
             ->setStatusCode(201); // 201 Created
@@ -56,7 +58,7 @@ class ProductorController extends Controller
         return (new ProductorResource($productor))
             ->additional([
                 'success' => true,
-                'message' => 'Productor actualizado correctamente.'
+                'message' => 'Productor actualizado correctamente.',
             ]);
     }
 
@@ -66,7 +68,7 @@ class ProductorController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Productor eliminado correctamente.'
+            'message' => 'Productor eliminado correctamente.',
         ], 200);
     }
 }

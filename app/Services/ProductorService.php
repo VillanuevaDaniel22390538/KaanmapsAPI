@@ -17,9 +17,9 @@ class ProductorService
         $this->repository = $repository;
     }
 
-    public function listarProductores(array $filters, int $perPage = 15)
+    public function listarProductores(array $filters, int $limitPerPage)
     {
-        return $this->repository->getAll($filters, $perPage);
+        return $this->repository->getAll($filters, $limitPerPage);
     }
 
     public function obtenerProductor(int $id)

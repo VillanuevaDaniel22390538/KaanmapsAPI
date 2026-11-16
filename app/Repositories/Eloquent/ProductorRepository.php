@@ -7,7 +7,7 @@ use App\Repositories\Interfaces\ProductorRepositoryInterface;
 
 class ProductorRepository implements ProductorRepositoryInterface
 {
-    public function getAll(array $filters, int $perPage = 15)
+    public function getAll(array $filters, int $limitPerPage = 100)
     {
         // Cargamos las relaciones para que la respuesta sea completa
         $query = Productor::with(['usuario', 'ubicaciones', 'productos']);
@@ -38,14 +38,16 @@ class ProductorRepository implements ProductorRepositoryInterface
             });
         }
 
-        // 5. Filtro por Categoría de Producto (A través de la relación productos)
-        if (isset($filters['categoria_id']) && ! empty($filters['categoria_id'])) {
-            $query->whereHas('productos', function ($q) use ($filters) {
-                $q->where('ID_Categoria', $filters['categoria_id']);
-            });
+        // 5. Filtro directo por Categoría del Productor
+        if (isset($filters['idCategoria']) && ! empty($filters['idCategoria'])) {
+            $query->where('ID_Categoria', $filters['idCategoria']);
+        }
+        // Como respaldo, por si decides enviar categoria_id desde alguna otra pantalla
+        elseif (isset($filters['categoria_id']) && ! empty($filters['categoria_id'])) {
+            $query->where('ID_Categoria', $filters['categoria_id']);
         }
 
-        return $query->paginate($perPage);
+        return $query->paginate($limitPerPage);
     }
 
     public function getById(int $id)
