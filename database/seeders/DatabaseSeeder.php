@@ -13,8 +13,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            CategoriaSeeder::class,
             // Se registran en las fases siguientes:
-            // CategoriaSeeder::class,
             // ReasignarCategoriasProductosSeeder::class,
             // ProductosDemoSeeder::class,
         ]);

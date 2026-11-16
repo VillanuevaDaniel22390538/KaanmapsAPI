@@ -20,7 +20,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/eventos', [EventoController::class, 'index']);
         Route::get('/convocatorias', [ConvocatoriaController::class, 'index']);
         
-        Route::get('/categorias', [CategoriaController::class, 'index']);
+        Route::get('/categorias', [CategoriaController::class, 'index'])
+            ->middleware('cache.headers:public;max_age=3600;etag');
         
         Route::get('/productores', [ProductorController::class, 'index']);
         Route::get('/productores/{id}', [ProductorController::class, 'show']);

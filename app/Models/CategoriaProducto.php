@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\CategoriaTree;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,44 +11,50 @@ class CategoriaProducto extends Model
 {
     use HasFactory;
 
-    /**
-     * Nombre de la tabla en la base de datos.
-     */
     protected $table = 'categorias_productos';
 
-    /**
-     * Llave primaria personalizada.
-     */
     protected $primaryKey = 'ID_Categoria';
 
-    /**
-     * La tabla no tiene columnas created_at y updated_at.
-     */
     public $timestamps = false;
 
-    /**
-     * Campos que se pueden asignar masivamente.
-     */
     protected $fillable = [
         'Nombre_Categoria',
+        'slug',
         'ID_Categoria_Padre',
         'Descripcion',
         'URL_Icono',
         'Color_Hex',
+        'orden',
+        'activo',
     ];
 
-    /**
-     * Relación: Una categoría tiene muchos productos.
-     * (Opcional, pero útil para consultas futuras)
-     */
+    protected $casts = [
+        'orden' => 'integer',
+        'activo' => 'boolean',
+    ];
+
+    protected static function booted(): void
+    {
+        // El árbol se cachea; cualquier cambio lo invalida.
+        static::saved(fn () => CategoriaTree::flush());
+        static::deleted(fn () => CategoriaTree::flush());
+    }
+
+    public function scopeActivas(Builder $query): Builder
+    {
+        return $query->where('activo', true);
+    }
+
     public function productos()
     {
         return $this->hasMany(Producto::class, 'ID_Categoria', 'ID_Categoria');
     }
 
-    /**
-     * Relación: Una categoría puede tener subcategorías.
-     */
+    public function padre()
+    {
+        return $this->belongsTo(CategoriaProducto::class, 'ID_Categoria_Padre', 'ID_Categoria');
+    }
+
     public function subcategorias()
     {
         return $this->hasMany(CategoriaProducto::class, 'ID_Categoria_Padre', 'ID_Categoria');
