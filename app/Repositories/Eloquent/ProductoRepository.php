@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Producto;
 use App\Repositories\Interfaces\ProductoRepositoryInterface;
 use App\Support\CategoriaTree;
+use App\Support\Like;
 use Illuminate\Database\Eloquent\Builder;
 
 class ProductoRepository implements ProductoRepositoryInterface
@@ -34,8 +35,7 @@ class ProductoRepository implements ProductoRepositoryInterface
         }
 
         if (! empty($filters['q'])) {
-            // Escape "!" para que % y _ del usuario no actúen como comodines (válido en MySQL/MariaDB y sqlite).
-            $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $filters['q']).'%';
+            $like = Like::contiene($filters['q']);
             $query->where(function (Builder $q) use ($like) {
                 $q->whereRaw("Nombre_Producto LIKE ? ESCAPE '!'", [$like])
                     ->orWhereRaw("Descripcion LIKE ? ESCAPE '!'", [$like]);

@@ -81,6 +81,11 @@ class CategoriaTree
         return isset($this->nodes[$id]);
     }
 
+    public function nombre(int $id): ?string
+    {
+        return $this->nodes[$id]['nombre'] ?? null;
+    }
+
     public function estaActiva(int $id): bool
     {
         return (bool) ($this->nodes[$id]['activo'] ?? false);

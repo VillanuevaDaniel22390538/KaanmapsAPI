@@ -12,6 +12,11 @@ use Illuminate\Contracts\Validation\ValidationRule;
  */
 class CategoriaAsignable implements ValidationRule
 {
+    /** @param int $minNivel 2 = subcategoría o tipo (productos); 1 = cualquier nivel (categoría principal de un productor) */
+    public function __construct(private int $minNivel = 2)
+    {
+    }
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $tree = CategoriaTree::current();
@@ -30,7 +35,7 @@ class CategoriaAsignable implements ValidationRule
             return;
         }
 
-        if ($tree->nivel($id) < 2) {
+        if ($tree->nivel($id) < $this->minNivel) {
             $fail('Selecciona una subcategoría o tipo, no una categoría general.');
         }
     }

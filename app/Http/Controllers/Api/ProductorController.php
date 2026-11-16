@@ -3,70 +3,62 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductorResource;
-use App\Services\ProductorService;
+use App\Http\Requests\ListProductoresRequest;
+use App\Http\Requests\ShowProductorRequest;
 use App\Http\Requests\StoreProductorRequest;
 use App\Http\Requests\UpdateProductorRequest;
-use Illuminate\Http\Request;
+use App\Http\Resources\ProductorResource;
+use App\Models\Productor;
+use App\Services\ProductorService;
+use Illuminate\Support\Facades\Gate;
 
 class ProductorController extends Controller
 {
-    protected $service;
-
-    public function __construct(ProductorService $service)
+    public function __construct(protected ProductorService $service)
     {
-        $this->service = $service;
     }
 
-    public function index(Request $request)
-{
-    $filters = $request->only([
-        'search', 'tipo_actividad', 'estado_verificacion', 'municipio', 'categoria_id'
-    ]);
-    
-    $productores = $this->service->listarProductores($filters, $request->get('per_page', 15));
-    
-    return ProductorResource::collection($productores);
-}
-
-    public function show($id)
+    public function index(ListProductoresRequest $request)
     {
-        $productor = $this->service->obtenerProductor($id);
-        return new ProductorResource($productor);
+        return ProductorResource::collection(
+            $this->service->listarProductores($request->filtros(), $request->perPage())
+        );
+    }
+
+    public function show(ShowProductorRequest $request, int $id)
+    {
+        return new ProductorResource(
+            $this->service->obtenerProductor($id, $request->incluirProductos())
+        );
     }
 
     public function store(StoreProductorRequest $request)
     {
-        // Los datos ya están validados por StoreProductorRequest
         $productor = $this->service->crearProductor($request->validated());
 
         return (new ProductorResource($productor))
-            ->additional([
-                'success' => true,
-                'message' => 'Productor creado exitosamente.'
-            ])
+            ->additional(['success' => true, 'message' => 'Productor creado exitosamente.'])
             ->response()
-            ->setStatusCode(201); // 201 Created
+            ->setStatusCode(201);
     }
 
-    public function update(UpdateProductorRequest $request, $id)
+    public function update(UpdateProductorRequest $request, int $id)
     {
         $productor = $this->service->actualizarProductor($id, $request->validated());
 
         return (new ProductorResource($productor))
-            ->additional([
-                'success' => true,
-                'message' => 'Productor actualizado correctamente.'
-            ]);
+            ->additional(['success' => true, 'message' => 'Productor actualizado correctamente.']);
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
+        Gate::authorize('delete', Productor::findOrFail($id));
+
         $this->service->eliminarProductor($id);
 
         return response()->json([
             'success' => true,
-            'message' => 'Productor eliminado correctamente.'
+            'message' => 'Productor eliminado correctamente.',
         ], 200);
     }
 }

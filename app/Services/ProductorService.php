@@ -2,19 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\Productor;
 use App\Repositories\Interfaces\ProductorRepositoryInterface;
 use App\Support\MediaUrl;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class ProductorService
 {
-    protected $repository;
-
-    public function __construct(ProductorRepositoryInterface $repository)
+    public function __construct(protected ProductorRepositoryInterface $repository)
     {
-        $this->repository = $repository;
     }
 
     public function listarProductores(array $filters, int $perPage = 15)
@@ -22,28 +21,35 @@ class ProductorService
         return $this->repository->getAll($filters, $perPage);
     }
 
-    public function obtenerProductor(int $id)
+    public function obtenerProductor(int $id, bool $conProductos = false)
     {
-        return $this->repository->getById($id);
+        return $this->repository->getById($id, $conProductos);
     }
 
     public function crearProductor(array $data)
     {
-        // Manejo de la subida de imagen (Logo) con optimización
-        if (isset($data['Logo_URL']) && $data['Logo_URL'] instanceof \Illuminate\Http\UploadedFile) {
-            $data['Logo_URL'] = $this->procesarImagen($data['Logo_URL'], 'logos');
+        [$data, $imagenes] = $this->prepararDatos($data);
+
+        $productor = $this->repository->create($data);
+
+        if ($imagenes !== null) {
+            $this->repository->syncImagenes($productor, $imagenes);
         }
 
-        return $this->repository->create($data);
+        return $productor;
     }
 
     public function actualizarProductor(int $id, array $data)
     {
-        if (isset($data['Logo_URL']) && $data['Logo_URL'] instanceof \Illuminate\Http\UploadedFile) {
-            $data['Logo_URL'] = $this->procesarImagen($data['Logo_URL'], 'logos');
+        [$data, $imagenes] = $this->prepararDatos($data);
+
+        $productor = $this->repository->update($id, $data);
+
+        if ($imagenes !== null) {
+            $this->repository->syncImagenes($productor, $imagenes);
         }
 
-        return $this->repository->update($id, $data);
+        return $productor;
     }
 
     public function eliminarProductor(int $id)
@@ -52,27 +58,43 @@ class ProductorService
     }
 
     /**
-     * Método privado para procesar y optimizar imágenes.
+     * Sube logo e imágenes de instalaciones (solo rutas relativas a BD).
+     *
+     * @return array{0: array, 1: ?list<string>} [datos para el modelo, rutas de instalaciones o null si no vinieron]
      */
-    private function procesarImagen($file, $carpeta)
+    private function prepararDatos(array $data): array
     {
-        // Inicializar el gestor de imágenes (usando el driver GD)
-        $manager = new ImageManager(new Driver());
-        
-        // Leer la imagen subida
-        $image = $manager->read($file);
-        
-        // Redimensionar: Si es más ancha de 800px, la escala proporcionalmente
+        if (isset($data['Logo_URL']) && $data['Logo_URL'] instanceof UploadedFile) {
+            $data['Logo_URL'] = $this->procesarImagen($data['Logo_URL'], 'logos');
+        }
+
+        $imagenes = null;
+        if (array_key_exists('imagenes_instalaciones', $data)) {
+            $imagenes = [];
+            foreach ((array) $data['imagenes_instalaciones'] as $archivo) {
+                if ($archivo instanceof UploadedFile) {
+                    $imagenes[] = $this->procesarImagen($archivo, 'instalaciones');
+                }
+            }
+            unset($data['imagenes_instalaciones']);
+        }
+
+        return [$data, $imagenes];
+    }
+
+    /**
+     * Optimiza la imagen (máx. 800 px de ancho, JPEG calidad 80) y la guarda en el
+     * disco configurado (MEDIA_DISK). Devuelve SOLO la ruta relativa.
+     */
+    private function procesarImagen(UploadedFile $file, string $carpeta): string
+    {
+        $image = (new ImageManager(new Driver()))->read($file);
         $image->scaleDown(width: 800);
-        
-        // Generar un nombre único y la ruta destino (Ej: storage_global/app/public/logos/abc123.jpg)
-        $filename = uniqid() . '.jpg'; // el contenido se re-codifica a JPEG
-        $path = $carpeta . '/' . $filename;
-        
-        // Guardar la imagen optimizada en el disco configurado (MEDIA_DISK)
-        Storage::disk(MediaUrl::disk())->put($path, (string) $image->toJpeg(80)); // Calidad 80%
-        
-        // En BD va SOLO la ruta relativa; la URL absoluta se construye al responder (MediaUrl)
+
+        $path = $carpeta.'/'.uniqid().'.jpg'; // el contenido se re-codifica a JPEG
+
+        Storage::disk(MediaUrl::disk())->put($path, (string) $image->toJpeg(80));
+
         return $path;
     }
 }

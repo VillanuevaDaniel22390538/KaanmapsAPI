@@ -4,70 +4,102 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Productor;
 use App\Repositories\Interfaces\ProductorRepositoryInterface;
+use App\Support\CategoriaTree;
+use App\Support\Like;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductorRepository implements ProductorRepositoryInterface
 {
+    /** Relaciones que usa ProductorResource (evita N+1). */
+    private const RELACIONES = ['usuario', 'ubicaciones', 'imagenes'];
+
     public function getAll(array $filters, int $perPage = 15)
     {
-        // Cargamos las relaciones para que la respuesta sea completa
-        $query = Productor::with(['usuario', 'ubicaciones', 'productos']);
+        $query = Productor::query()
+            ->with(self::RELACIONES)
+            ->catalogo();
 
-        // 1. Búsqueda por texto (Nombre del negocio o descripción)
-        if (isset($filters['search']) && !empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('Nombre_Negocio', 'LIKE', "%{$search}%")
-                  ->orWhere('Descripcion_Negocio', 'LIKE', "%{$search}%");
+        if (! empty($filters['q'])) {
+            $like = Like::contiene($filters['q']);
+            $query->where(function (Builder $q) use ($like) {
+                $q->whereRaw("Nombre_Negocio LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("Descripcion_Negocio LIKE ? ESCAPE '!'", [$like]);
             });
         }
 
-        // 2. Filtro por Tipo de Actividad
-        if (isset($filters['tipo_actividad']) && !empty($filters['tipo_actividad'])) {
+        if (! empty($filters['tipo_actividad'])) {
             $query->where('Tipo_Actividad', $filters['tipo_actividad']);
         }
-        
-        // 3. Filtro por Estado de Verificación
-        if (isset($filters['estado_verificacion']) && !empty($filters['estado_verificacion'])) {
+
+        if (! empty($filters['estado_verificacion'])) {
             $query->where('Estado_Verificacion', $filters['estado_verificacion']);
         }
 
-        // 4. Filtro por Municipio (A través de la relación ubicaciones)
-        if (isset($filters['municipio']) && !empty($filters['municipio'])) {
-            $query->whereHas('ubicaciones', function ($q) use ($filters) {
-                $q->where('Municipio', 'LIKE', "%{$filters['municipio']}%");
-            });
+        if (! empty($filters['municipio'])) {
+            $like = Like::contiene($filters['municipio']);
+            $query->whereHas('ubicaciones', fn (Builder $q) => $q->whereRaw("Municipio LIKE ? ESCAPE '!'", [$like]));
         }
 
-        // 5. Filtro por Categoría de Producto (A través de la relación productos)
-        if (isset($filters['categoria_id']) && !empty($filters['categoria_id'])) {
-            $query->whereHas('productos', function ($q) use ($filters) {
-                $q->where('ID_Categoria', $filters['categoria_id']);
-            });
+        if (! empty($filters['categoria_id'])) {
+            // Coincide si su categoría principal está en el subárbol O tiene productos en él.
+            $ids = CategoriaTree::current()->idsConDescendientes((int) $filters['categoria_id']);
+
+            if ($ids) {
+                $query->where(function (Builder $q) use ($ids) {
+                    $q->whereIn('categoria_id', $ids)
+                        ->orWhereHas('productos', fn (Builder $p) => $p->whereIn('ID_Categoria', $ids));
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
-        return $query->paginate($perPage);
+        return $query->orderBy('ID_Productor')->paginate($perPage)->withQueryString();
     }
 
-    public function getById(int $id)
+    public function getById(int $id, bool $conProductos = false)
     {
-        return Productor::with(['usuario', 'ubicaciones', 'productos'])->findOrFail($id);
+        $relaciones = self::RELACIONES;
+
+        if ($conProductos) {
+            $relaciones['productos'] = fn ($q) => $q->orderByDesc('Fecha_Registro')->orderByDesc('ID_Producto');
+        }
+
+        return Productor::query()
+            ->with($relaciones)
+            ->catalogo()
+            ->findOrFail($id);
     }
 
     public function create(array $data)
     {
-        return Productor::create($data);
+        return Productor::create($data)->refresh()->load(self::RELACIONES);
     }
 
     public function update(int $id, array $data)
     {
         $productor = Productor::findOrFail($id);
         $productor->update($data);
-        return $productor->load(['usuario', 'ubicaciones', 'productos']);
+
+        return $productor->refresh()->load(self::RELACIONES);
     }
 
     public function delete(int $id)
     {
         $productor = Productor::findOrFail($id);
+
         return $productor->delete();
+    }
+
+    public function syncImagenes(Productor $productor, array $rutas): void
+    {
+        $productor->imagenes()->delete();
+
+        foreach (array_values($rutas) as $orden => $ruta) {
+            $productor->imagenes()->create(['ruta' => $ruta, 'orden' => $orden]);
+        }
+
+        $productor->unsetRelation('imagenes');
+        $productor->load('imagenes');
     }
 }
