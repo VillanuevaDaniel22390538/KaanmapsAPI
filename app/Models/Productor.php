@@ -25,12 +25,18 @@ class Productor extends Model
         'Programa_Apoyo',
         'Certificacion_Verde',
         'Logo_URL',
+        'Imagen_Portada_URL',
+        'Imagenes_Instalaciones',
         'Slogan',
         'Estado_Verificacion',
         'Estado',
         'ID_Dependencia_Registradora',
         'ID_Usuario_Registrador',
         'Estado_Aprobacion_Gobierno',
+    ];
+
+    protected $casts = [
+        'Imagenes_Instalaciones' => 'array',
     ];
 
     public function usuario()

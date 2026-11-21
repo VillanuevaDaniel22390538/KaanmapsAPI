@@ -28,7 +28,7 @@ class ProductorResource extends JsonResource
             'instagram' => $this->instagram, // <-- Nuevo
             'hora_apertura' => $this->hora_apertura, // <-- Nuevo
             'hora_cierre' => $this->hora_cierre, // <-- Nuevo
-            'imagenes_instalaciones' => $this->imagenes_instalaciones ?? [], // <-- Nuevo
+            'imagenes_instalaciones' => $this->Imagenes_Instalaciones ?? [], // <-- Nuevo
         ];
     }
 }

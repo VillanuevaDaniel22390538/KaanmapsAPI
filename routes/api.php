@@ -27,13 +27,6 @@ Route::prefix('v1')->group(function () {
         
         Route::get('/productos', [ProductoController::class, 'index']);
         Route::get('/productos/{id}', [ProductoController::class, 'show']);
-    });
-
-    // ==========================================
-    // Rutas Protegidas (Requieren Token)
-    // ==========================================
-    Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
         
         // Productores
         Route::post('/productores', [ProductorController::class, 'store']);
@@ -49,5 +42,26 @@ Route::prefix('v1')->group(function () {
         Route::get('/ubicaciones', [UbicacionController::class, 'index']);
         Route::post('/ubicaciones', [UbicacionController::class, 'store']);
     });
+
+    // ==========================================
+    // Rutas Protegidas (Requieren Token)
+    // ==========================================
+    // Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    //     Route::post('/logout', [AuthController::class, 'logout']);
+        
+    //     // Productores
+    //     Route::post('/productores', [ProductorController::class, 'store']);
+    //     Route::put('/productores/{id}', [ProductorController::class, 'update']);
+    //     Route::delete('/productores/{id}', [ProductorController::class, 'destroy']);
+
+    //     // Productos
+    //     Route::post('/productos', [ProductoController::class, 'store']);
+    //     Route::put('/productos/{id}', [ProductoController::class, 'update']);
+    //     Route::delete('/productos/{id}', [ProductoController::class, 'destroy']);
+
+    //     // Ubicaciones
+    //     Route::get('/ubicaciones', [UbicacionController::class, 'index']);
+    //     Route::post('/ubicaciones', [UbicacionController::class, 'store']);
+    // });
 
 });
